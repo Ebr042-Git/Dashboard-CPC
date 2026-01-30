@@ -1,105 +1,31 @@
-let dashboardData = [];
-let chartInstance;
-
-// Fetch data from API
-async function fetchData() {
-    try {
-        const response = await fetch('https://script.google.com/macros/s/AKfycbyRvvLmZg1zzfGsgFb8XVUApclToxCH1ZyqVG0jlWntK94V_TZWcXq_j-uL-WGLtpK6Gw/exec');
-        const data = await response.json();
-        dashboardData = data; // save globally
-        populateFilters(data);
-        renderTable(data);
-        renderChart(data);
-        updateSummary(data);
-    } catch (error) {
-        console.error('Error fetching data:', error);
-    }
+body {
+  font-family: Arial, sans-serif;
+  background: #f8f9fa;
+  padding: 20px;
 }
 
-// Render table
-function renderTable(data) {
-    const tbody = document.querySelector('#dashboard-table tbody');
-    tbody.innerHTML = '';
-
-    const statusColor = {
-        Active: '#FFD700',   // yellow
-        Completed: '#90EE90', // green
-        Delayed: '#FF6347'   // red
-    };
-
-    data.forEach(item => {
-        const row = document.createElement('tr');
-        row.style.backgroundColor = statusColor[item.status] || 'white';
-        row.innerHTML = `
-            <td>${item.team}</td>
-            <td>${item.status}</td>
-            <td>${item.tasks}</td>
-            <td>${item.progress}%</td>
-        `;
-        tbody.appendChild(row);
-    });
+h1, h2 {
+  text-align: center;
 }
 
-// Populate team filter dynamically
-function populateFilters(data) {
-    const teamFilter = document.getElementById('team-filter');
-    const teams = [...new Set(data.map(d => d.team))];
-    teams.forEach(team => {
-        const option = document.createElement('option');
-        option.value = team;
-        option.innerText = team;
-        teamFilter.appendChild(option);
-    });
+#taskContainer div {
+  background: #fff;
+  padding: 15px;
+  margin-bottom: 12px;
+  border-radius: 12px;
+  box-shadow: 0 3px 8px rgba(0,0,0,0.1);
 }
 
-// Apply filters
-function applyFilters() {
-    const teamValue = document.getElementById('team-filter').value;
-    const statusValue = document.getElementById('status-filter').value;
-
-    let filtered = dashboardData;
-    if (teamValue) filtered = filtered.filter(d => d.team === teamValue);
-    if (statusValue) filtered = filtered.filter(d => d.status === statusValue);
-
-    renderTable(filtered);
-    renderChart(filtered);
-    updateSummary(filtered);
+.progress-bar {
+  width: 100%;
+  height: 20px;
+  background: #eee;
+  border-radius: 5px;
+  margin-top: 8px;
 }
 
-// Update summary cards
-function updateSummary(data) {
-    document.getElementById('totalTeams').innerText = [...new Set(data.map(d => d.team))].length;
-    document.getElementById('activeTasks').innerText = data.filter(d => d.status === 'Active').length;
+.progress-fill {
+  height: 100%;
+  background: #007bff;
+  border-radius: 5px;
 }
-
-// Render chart
-function renderChart(data) {
-    const ctx = document.getElementById('progressChart').getContext('2d');
-    const labels = data.map(d => d.team);
-    const progressData = data.map(d => d.progress);
-
-    if (chartInstance) chartInstance.destroy();
-
-    chartInstance = new Chart(ctx, {
-        type: 'bar',
-        data: {
-            labels: labels,
-            datasets: [{
-                label: 'Progress %',
-                data: progressData,
-                backgroundColor: 'rgba(54, 162, 235, 0.6)'
-            }]
-        },
-        options: {
-            responsive: true,
-            scales: { y: { beginAtZero: true, max: 100 } }
-        }
-    });
-}
-
-// Event listeners for filters
-document.getElementById('team-filter').addEventListener('change', applyFilters);
-document.getElementById('status-filter').addEventListener('change', applyFilters);
-
-// Load data on page load
-window.onload = fetchData;
